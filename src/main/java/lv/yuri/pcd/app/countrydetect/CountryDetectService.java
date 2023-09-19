@@ -1,10 +1,12 @@
 package lv.yuri.pcd.app.countrydetect;
 
+import lombok.extern.slf4j.Slf4j;
 import lv.yuri.pcd.domain.CountryCallingCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
+@Slf4j
 @Component
 public class CountryDetectService {
 
@@ -15,35 +17,18 @@ public class CountryDetectService {
 
     public CountryDetectByPhoneNumberRespDto detectByPhoneNumber(String phoneNumber) {
         try {
-            validatePhoneNumber(phoneNumber);
-            validateMaxCodeLength(phoneNumber, MAX_CODE_LENGTH);
-            List<Integer> numberCodesList = CountryDetectUtils.phoneNumberToCountryCodesList(phoneNumber, MAX_CODE_LENGTH);
-            List<CountryCallingCode> countryCallingCodeList = countryDetectRepository.listByCodes(numberCodesList);
+            CountryDetectValidator.checkPhoneNumber(phoneNumber);
+            List<Integer> countryCodeCandidatesList = CountryDetectUtils.populateCountryCodeCandidatesListFromPhoneNumber(phoneNumber, MAX_CODE_LENGTH);
+            List<CountryCallingCode> countryCallingCodeList = countryDetectRepository.listByCodes(countryCodeCandidatesList);
+            CountryDetectValidator.checkFoundResult(countryCallingCodeList);
             return CountryDetectByPhoneNumberRespDtoMapper.map(countryCallingCodeList);
         } catch (CountryDetectValidationException e) {
-           CountryDetectByPhoneNumberRespDto responseDto = new CountryDetectByPhoneNumberRespDto();
-           responseDto.setErrorMessage(e.getMessage());
-           responseDto.setHasError(true);
-           return responseDto;
-        } catch (Exception e) {
+            log.warn(e.getMessage());
             CountryDetectByPhoneNumberRespDto responseDto = new CountryDetectByPhoneNumberRespDto();
-            responseDto.setErrorMessage("General server error");
-            responseDto.setHasError(true);
+            responseDto.setWarningMsg(e.getMessage());
+            responseDto.setHasWarning(true);
             return responseDto;
         }
     }
-
-    private void validatePhoneNumber(String phoneNumber) throws CountryDetectValidationException {
-        if(phoneNumber.isEmpty()) {
-            throw new CountryDetectValidationException("Number is empty");
-        }
-    }
-
-    private void validateMaxCodeLength(String phoneNumber, int maxCodeLength) throws CountryDetectValidationException {
-        if(maxCodeLength == 0) {
-            throw new CountryDetectValidationException("Max Country code must not be null");
-        }
-    }
-
 
 }

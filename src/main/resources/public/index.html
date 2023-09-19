@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phone Country Detector</title>
+
+    <script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: aliceblue;
+        }
+
+        .main-wrapper {
+            width: 500px;
+            margin: 0 auto;
+            padding-top: 50px;
+            text-align: center;
+        }
+
+        .form-container {
+            padding-bottom: 30px;
+        }
+
+        form input {
+            height: 45px;
+            width: 320px;
+            font-size: 25px;
+            border-radius: 7px;
+            text-align: center;
+        }
+
+        form button {
+            height: 35px;
+        }
+
+        .message-container {
+            font-size: 45px;
+        }
+
+        .container-success,
+        .container-warning,
+        .container-error {
+            display: none;
+        }
+
+        .container-success {
+            color: indigo;
+        }
+
+        .container-warning {
+            color: darkorange;
+        }
+
+        .container-error {
+            color: crimson;
+        }
+
+        .message-container p {
+            padding: 0;
+            margin: 0;
+        }
+
+        p.msg-label {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="form-container">
+            <form>
+                <p><input name="phoneNumber" type="text" maxlength="15" placeholder="phone number goes here" /></p>
+                <p><button type="button" onclick="submitBtnClick(this.form);">detect country</button></p>
+            </form>
+        </div>
+        <div class="message-container container-success">
+            <p class="msg-label">DETECTED</p><span class="ctrl-message"></span>
+        </div>
+        <div class="message-container container-error">
+            <p class="msg-label">ERROR</p><p class="ctrl-message"></p>
+        </div>
+        <div class="message-container container-warning">
+            <p class="msg-label">WARNING</p><p class="ctrl-message"></p>
+        </div>
+    </div>
+
+    `<script type="text/javascript">
+
+        const URL = "/api/country-detect-by/phone-number/"
+        function constructPhoneNumberDetectUrl(phoneNumber) {
+            return URL+phoneNumber
+        }
+
+        function submitBtnClick(formElem) {
+            resetUi();
+            let phoneNumber = formElem.phoneNumber.value;
+            console.log("Submitting form : " + phoneNumber);
+            sendRequest(phoneNumber);
+        }
+
+        function resetUi() {
+            $('.container-success').hide(100);
+            $('.container-success .ctrl-message').text("");
+            $('.container-warning').hide(100);
+            $('.container-warning .ctrl-message').text("");
+            $('.container-error').hide(100);
+            $('.container-error .ctrl-message').text("");
+        }
+
+        function sendRequest(phoneNumber) {
+            $.ajax({
+                type: 'GET',
+                url: constructPhoneNumberDetectUrl(phoneNumber),
+                dataType: 'json',
+                success: function (responseData, status, xhr) {
+                    onSuccess(responseData, status, xhr)
+                },
+                error: function (responseData, status, error) {
+                    onError(responseData, status, error);
+                }
+            });
+        }
+
+        function onSuccess(respDto, status, xhr) {
+            console.log("onSuccess > hasWarning: " +respDto.hasWarning);
+            if(respDto.hasWarning) {
+                $('.container-warning .ctrl-message').text(respDto.warningMsg);
+                $('.container-warning').show(100);
+            } else {
+                let countriesStr =  prepareReverseSortedString(respDto.countries);
+                $('.container-success .ctrl-message').text(countriesStr);
+                $('.container-success').show(100);
+            }
+        }
+
+        function onError(request, status, error) {
+            console.log("onError > responseText: " +request.responseText)
+            //$('.container-error .ctrl-message').text(textStatus);
+            $('.container-error .ctrl-message').text(request.responseText);
+            $('.container-error').show(100);
+        }
+
+        function prepareReverseSortedString(countryList) {
+            return countryList
+                .sort()
+                .reverse()
+                .join(", ");
+        }
+
+    </script>`
+
+</body>
+</html>
