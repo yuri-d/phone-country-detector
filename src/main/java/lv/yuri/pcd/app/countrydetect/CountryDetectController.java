@@ -15,8 +15,8 @@ public class CountryDetectController {
     CountryDetectService countryDetectService;
 
     @GetMapping(value = {
-                    "/api/country-detect-by/phone-number/{phoneNumber}",
-                    "/api/country-detect-by/phone-number/"})
+                    "/api/countrydetect/phonenumber/{phoneNumber}",
+                    "/api/countrydetect/phonenumber/"})
     public ResponseEntity<Object> detectByPhoneNumber(@PathVariable(required = false) String phoneNumber) {
         log.info("Start for number: [{}]", phoneNumber);
         try {
