@@ -24,7 +24,7 @@ class CountryDetectServiceIntegrationSpec extends Specification {
     }
 
     @Unroll
-    def "test detectByPhoneNumber() - happy path - single and multiple countries found"() {
+    def "test detectByPhoneNumber() - single and multiple countries found"() {
 
         when:
             CountryDetectByPhoneNumberRespDto result = subject.detectByPhoneNumber(givenPhoneNumber)
@@ -36,17 +36,34 @@ class CountryDetectServiceIntegrationSpec extends Specification {
             } else if(expectedResultSize == 2) {
                 assert result.countries.contains(expectedCountry1)
                 assert result.countries.contains(expectedCountry2)
-            } else if(expectedResultSize > 2) {
-                assert false
             }
 
         where:
             givenPhoneNumber || expectedResultSize | expectedCountry1 | expectedCountry2
-            "99999999999"    || 0                  | _                | _
             "12423222931"    || 1                  | "Bahamas"        | _
             "71423423412"    || 1                  | "Russia"         | _
             "77112227231"    || 1                  | "Kazakhstan"     | _
             "11165384765"    || 2                  | "United States"  | "Canada"
+    }
+
+    @Unroll
+    def "test detectByPhoneNumber() - validation warnings"() {
+
+        when:
+            CountryDetectByPhoneNumberRespDto result = subject.detectByPhoneNumber(givenPhoneNumber)
+
+        then:
+            result.getCountries().size() == 0
+            result.hasWarning == true
+            result.warningMsg == warningMsg
+
+        where:
+            givenPhoneNumber || warningMsg
+            null             || "Phone Number not entered"
+            ""               || "Phone Number not entered"
+            "abc"            || "Only digits allowed"
+            "99999999999"    || "Nothing was found"
+
     }
 
     private void populateCallingCodeRepositoryData() {
